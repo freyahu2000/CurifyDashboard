@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Curify Business Metrics Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --secondary-color: #3f37c9;
+      --accent-color: #4895ef;
+      --light-color: #f8f9fa;
+      --dark-color: #212529;
+      --success-color: #4cc9f0;
+      --warning-color: #f8961e;
+      --danger-color: #f72585;
+      --border-radius: 12px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --transition: all 0.3s ease;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      padding: 20px;
+      background-color: #f5f7fa;
+      color: var(--dark-color);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      font-weight: 700;
+      font-size: 2.5rem;
+      position: relative;
+      padding-bottom: 15px;
+    }
+    
+    h1::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 4px;
+      background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+      border-radius: 2px;
+    }
+    
+    .date-controls {
+      text-align: center;
+      margin-bottom: 40px;
+      background: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    
+    .date-controls label {
+      font-weight: 500;
+      color: var(--dark-color);
+      margin-right: 10px;
+    }
+    
+    input[type="date"] {
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: var(--border-radius);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      transition: var(--transition);
+    }
+    
+    input[type="date"]:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+    }
+    
+    button {
+      padding: 10px 20px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius);
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    button:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 25px;
+      margin: 30px 0;
+    }
+    
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      text-align: center;
+      transition: var(--transition);
+      border-top: 4px solid var(--primary-color);
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card h3 {
+      color: var(--dark-color);
+      font-weight: 600;
+      margin-bottom: 15px;
+      font-size: 1.1rem;
+    }
+    
+    .card p {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin: 0;
+    }
+    
+    .chart-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      margin: 40px 0;
+    }
+    
+    .chart-wrapper {
+      background: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      width: 100%;
+      max-width: 600px;
+    }
+    
+    .chart-wrapper h2 {
+      text-align: center;
+      color: var(--dark-color);
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+    }
+    
+    #metric-notes {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: white;
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
+      max-width: 350px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--dark-color);
+      z-index: 100;
+      border-left: 4px solid var(--accent-color);
+      opacity: 0.95;
+      transition: var(--transition);
+    }
+    
+    #metric-notes:hover {
+      opacity: 1;
+    }
+    
+    #metric-notes strong {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+      font-size: 14px;
+      font-weight: 600;
+    }
+    
+    #metric-notes ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+    
+    #metric-notes li {
+      margin-bottom: 8px;
+    }
+    
+    #metric-notes b {
+      color: var(--secondary-color);
+    }
+    
+    @media (max-width: 768px) {
+      #cards {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+      
+      .chart-wrapper {
+        max-width: 100%;
+      }
+      
+      #metric-notes {
+        position: static;
+        max-width: 100%;
+        margin-top: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Curify Business Metrics Dashboard</h1>
+    
+    <div class="date-controls">
+      <label for="date">Start Date:</label>
+      <input type="date" id="date" />
+      <button onclick="main()">Query Data</button>
+    </div>
+
+    <div id="cards"></div>
+
+    <div class="chart-container">
+      <div class="chart-wrapper">
+        <h2>User Distribution</h2>
+        <canvas id="userBucketChart"></canvas>
+      </div>
+      
+      <div class="chart-wrapper">
+        <h2>Revenue by Day</h2>
+        <canvas id="revenueChart"></canvas>
+      </div>
+    </div>
+
+    <div id="metric-notes">
+      <strong>Metric Definitions:</strong>
+      <ul>
+        <li><b>Daily Active Users (DAU):</b> Number of unique users who created a project on the selected day.</li>
+        <li><b>Weekly Active Users (WAU):</b> Number of unique users who created a project in the 7-day period ending on the selected day.</li>
+        <li><b>Monthly Revenue:</b> Total revenue generated in the last 30 days ending on the selected day.</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    async function fetchMetrics(date) {
+      const res = await fetch(`/admin/metrics/business?query_date=${date}`);
+      if (!res.ok) {
+        alert("Failed to fetch data");
+        return null;
+      }
+      return await res.json();
+    }
+
+    function renderCards(data) {
+      const container = document.getElementById("cards");
+      container.innerHTML = "";
+      const items = [
+        ["Daily Active Users", data.daily_active_users],
+        ["Weekly Active Users", data.weekly_active_users],
+        ["New Registrations", data.new_registrations_today],
+        ["Daily Revenue ($)", data.daily_revenue.toFixed(2)],
+        ["Monthly Revenue ($)", data.monthly_revenue.toFixed(2)],
+        ["Paid Users", data.paying_user_count]
+      ];
+      
+      for (const [label, value] of items) {
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `<h3>${label}</h3><p>${value}</p>`;
+        container.appendChild(div);
+      }
+    }
+
+    function renderCharts(data) {
+      // User Bucket Chart
+      const ctxPie = document.getElementById("userBucketChart").getContext("2d");
+      if(window.userBucketChartInstance) window.userBucketChartInstance.destroy();
+      
+      window.userBucketChartInstance = new Chart(ctxPie, {
+        type: "pie",
+        data: {
+          labels: Object.keys(data.user_bucket_distribution),
+          datasets: [{
+            data: Object.values(data.user_bucket_distribution),
+            backgroundColor: [
+              '#4361ee',
+              '#4895ef',
+              '#4cc9f0',
+              '#3f37c9',
+              '#560bad',
+              '#7209b7'
+            ],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${ctx.parsed} users (${ctx.parsed/data.datasets[0].data.reduce((a, b) => a + b, 0)*100}%)`
+              }
+            }
+          },
+          cutout: '60%'
+        }
+      });
+
+      // Revenue Chart
+      const ctxBar = document.getElementById("revenueChart").getContext("2d");
+      if(window.revenueChartInstance) window.revenueChartInstance.destroy();
+      
+      window.revenueChartInstance = new Chart(ctxBar, {
+        type: "bar",
+        data: {
+          labels: Object.keys(data.revenue_by_day),
+          datasets: [{
+            label: "Daily Revenue ($)",
+            data: Object.values(data.revenue_by_day),
+            backgroundColor: [
+              'rgba(67, 97, 238, 0.7)',
+              'rgba(72, 149, 239, 0.7)',
+              'rgba(76, 201, 240, 0.7)',
+              'rgba(63, 55, 201, 0.7)',
+              'rgba(86, 11, 173, 0.7)',
+              'rgba(114, 9, 183, 0.7)'
+            ],
+            borderColor: [
+              'rgba(67, 97, 238, 1)',
+              'rgba(72, 149, 239, 1)',
+              'rgba(76, 201, 240, 1)',
+              'rgba(63, 55, 201, 1)',
+              'rgba(86, 11, 173, 1)',
+              'rgba(114, 9, 183, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { 
+              beginAtZero: true,
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              grid: {
+                display: false
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+
+    async function main() {
+      const dateInput = document.getElementById("date");
+      const date = dateInput.value;
+      if (!date) {
+        alert("Please select a date.");
+        return;
+      }
+      const data = await fetchMetrics(date);
+      if (data) {
+        renderCards(data);
+        renderCharts(data);
+      }
+    }
+    
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('date').value = today;
+    });
+  </script>
+</body>
+</html>
